@@ -18,14 +18,23 @@
 
 #include "ampswitch.h"
 
-int main (int argc, char *argv[])
+CAmpSwitch::CAmpSwitch(int argc, char *argv[])
 {
-  CAmpSwitch ampswitch(argc, argv);
+}
 
-  ampswitch.Setup();
-  ampswitch.Process();
-  ampswitch.Cleanup();
+CAmpSwitch::~CAmpSwitch()
+{
+}
 
-  return 0;
+void CAmpSwitch::Setup()
+{
+}
+
+void CAmpSwitch::Process()
+{
+}
+
+void CAmpSwitch::Cleanup()
+{
 }
 

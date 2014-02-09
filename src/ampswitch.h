@@ -16,16 +16,20 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ampswitch.h"
+#ifndef AMPSWITCH_H
+#define AMPSWITCH_H
 
-int main (int argc, char *argv[])
+class CAmpSwitch
 {
-  CAmpSwitch ampswitch(argc, argv);
+  public:
+    CAmpSwitch(int argc, char *argv[]);
+    ~CAmpSwitch();
 
-  ampswitch.Setup();
-  ampswitch.Process();
-  ampswitch.Cleanup();
+    void Setup();
+    void Process();
+    void Cleanup();
 
-  return 0;
-}
+  private:
+};
 
+#endif //AMPSWITCH_H
