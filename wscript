@@ -22,7 +22,7 @@ def configure(conf):
   conf.write_config_header('config.h')
 
 def build(bld):
-  bld.program(source='src/main.cpp'
+  bld.program(source='src/main.cpp',
               use=['jack'],
               includes='./src',
               cxxflags='-Wall -g',
