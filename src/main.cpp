@@ -22,7 +22,9 @@ int main (int argc, char *argv[])
 {
   CAmpSwitch ampswitch(argc, argv);
 
-  ampswitch.Setup();
+  if (!ampswitch.Setup())
+    return 1;
+
   ampswitch.Process();
   ampswitch.Cleanup();
 

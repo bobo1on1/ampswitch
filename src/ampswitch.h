@@ -19,17 +19,37 @@
 #ifndef AMPSWITCH_H
 #define AMPSWITCH_H
 
+#include <jack/jack.h>
+
 class CAmpSwitch
 {
   public:
     CAmpSwitch(int argc, char *argv[]);
     ~CAmpSwitch();
 
-    void Setup();
+    bool Setup();
     void Process();
     void Cleanup();
 
   private:
+    void        Connect();
+    bool        JackConnect();
+    void        JackDisconnect();
+
+    static int  SJackProcessCallback(jack_nframes_t nframes, void *arg);
+    int         PJackProcessCallback(jack_nframes_t nframes);
+
+    static void SignalHandler(int signum);
+
+    bool           m_connected;
+    jack_client_t* m_client;
+    jack_port_t*   m_port;
+    int            m_pipe[2];
+    bool           m_switchedon;
+    float          m_triggerlevel;
+    int            m_samplerate;
+    float          m_switchtime;
+    int            m_samplecounter;
 };
 
 #endif //AMPSWITCH_H
