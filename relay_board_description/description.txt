@@ -1,0 +1,87 @@
+Original description from the relay board in chinlish:
+
+
+Below item is powered by Canton-electronics Ltd . 
+ 
+Product Name: 12V 2Ch RS232 Relay Remote Control USB PC UART TTL COM Serial Ports Smart Home 
+ 
+Module No.:  TB252
+ 
+Qty:
+1 pcs Dual Function Manual control and PC UART Control Relay ;
+1 pcs RS232 to TTL;
+4 pcs female to 4 pins female dupont wire;  
+
+Descripion : 
+ 
+12V 2 Channel Relay Module; 
+ 
+Dual Function : Manual control & PC RS232 Control Relay; 
+ 
+Input and output optical isolation; 
+ 
+With 5V TTL 232 interface, which is convenient to achieve USB to PC by USB to TTL232 serial to control relay, you can also use 8051 AVR Arduino MCU to control relay ;
+ 
+Power indicator: LED lights ;
+
+Output indication: relay output with LED indicators, easy to see working status of the relay ;
+
+Communication protocol: UART protocol communication, baud rate 9600kpbs, 8 data bits, one stop bit, no parity. Each data frame contains eight bytes. Two-way data transmission.
+ 
+
+Baud rate 9600kbps, 8 data bits, one stop bit, no parity. Each data frame contains eight bytes..
+     
+1 Control commands：
+
+1. Reading status（reading the satus of the relay (on/off)）
+
+0x55  0x56  0x00  0x00  0x00  0x00  0x00  0xAB
+ 
+
+2. Relay open (issue this command ，Relay open , COM connect to NO ）
+
+Channel 1 ：0x55  0x56  0x00  0x00  0x00  0x01  0x01  0xAD
+
+Channel 2 ：0x55  0x56  0x00  0x00  0x00  0x02  0x01  0xAE
+ 
+
+3. Relay close (issue this command ，Relay close , COM disconnect NO , and COM connect to NC ）
+
+Channel 1 ：0x55  0x56  0x00  0x00  0x00  0x01  0x02  0xAE
+
+Channel 2 ：0x55  0x56  0x00  0x00  0x00  0x02  0x02  0xAF
+
+ 
+
+4. Relay toggle（Relay status reversal，if COM connect to NO，this commands will Disconnect COM to NO and Reverse COM connect to NC，and vice versa）
+
+Channel 1 ：0x55  0x56  0x00  0x00  0x00  0x01  0x03  0xAF
+
+Channel 2 ：0x55  0x56  0x00  0x00  0x00  0x02  0x03  0xB0
+ 
+
+5. Relay momentary（Relay COM connect to NO，disconnect after 200MS ）
+
+Channel 1 ：0x55  0x56  0x00  0x00  0x00  0x01  0x04  0xB0
+
+Channel 2 ：0x55  0x56  0x00  0x00  0x00  0x02  0x04  0xB1
+
+Once issue a command, will have a return fame , 7th byte of return fame mean the satus of realy .
+
+   
+   
+2 return command 
+   
+
+1、Return relay open（return this command，mean COM connect to NO ）
+
+Channel 1 :  0x33  0x3C  0x00  0x00  0x00  0x01  0x01  0x71 
+
+Channel 2 :  0x33  0x3C  0x00  0x00  0x00  0x02  0x01  0x72 
+ 
+
+2、Return relay close（return this command，mean COM disconnect NO , and COM connect to NC ）
+
+Channel 1 :  0x33  0x3C  0x00  0x00  0x00  0x01  0x02  0x72 
+
+Channel 2 :  0x33  0x3C  0x00  0x00  0x00  0x02  0x02  0x73
