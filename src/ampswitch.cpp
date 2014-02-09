@@ -53,13 +53,15 @@ CAmpSwitch::CAmpSwitch(int argc, char *argv[])
 
   struct option longoptions[] =
   {
-   {"on-command",  required_argument, NULL, 'n'},
-   {"off-command", required_argument, NULL, 'f'},
-   {"help",        no_argument,       NULL, 'h'},
+   {"on-command",    required_argument, NULL, 'n'},
+   {"off-command",   required_argument, NULL, 'f'},
+   {"switch-time",   required_argument, NULL, 's'},
+   {"trigger-level", required_argument, NULL, 't'},
+   {"help",          no_argument,       NULL, 'h'},
    {0, 0, 0, 0}
   };
 
-  const char* shortoptions = "n:f:h";
+  const char* shortoptions = "n:f:s:t:h";
   int c;
   int optionindex = 0;
   while ((c = getopt_long(argc, argv, shortoptions, longoptions, &optionindex)) != -1)
@@ -76,6 +78,28 @@ CAmpSwitch::CAmpSwitch(int argc, char *argv[])
     {
       PrintHelpMessage();
       exit(1);
+    }
+    else if (c == 's')
+    {
+      float switchtime;
+      if (sscanf(optarg, "%f", &switchtime) != 1)
+      {
+        printf("ERROR: Wrong value for switch-time: \"%s\"\n", optarg);
+        exit(1);
+      }
+
+      m_switchtime = switchtime;
+    }
+    else if (c == 't')
+    {
+      float triggerlevel;
+      if (sscanf(optarg, "%f", &triggerlevel) != 1)
+      {
+        printf("ERROR: Wrong value for trigger-level: \"%s\"\n", optarg);
+        exit(1);
+      }
+
+      m_triggerlevel = triggerlevel;
     }
     else if (c == '?')
     {
@@ -152,9 +176,11 @@ void CAmpSwitch::PrintHelpMessage()
          "\n"
          "  options:\n"
          "\n"
-         "    -n, --on-command   command to execute when switching on\n"
-         "    -f, --off-command  command to execute when switching off\n"
-         "    -h, --help         print this message\n"
+         "    -n, --on-command    command to execute when switching on\n"
+         "    -f, --off-command   command to execute when switching off\n"
+         "    -s, --switch-time   minimum number of seconds between switches\n"
+         "    -t, --trigger-level absolute value of trigger level\n"
+         "    -h, --help          print this message\n"
          "\n"
          );
 }
