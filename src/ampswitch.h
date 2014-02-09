@@ -39,6 +39,12 @@ class CAmpSwitch
     static int  SJackProcessCallback(jack_nframes_t nframes, void *arg);
     int         PJackProcessCallback(jack_nframes_t nframes);
 
+    static int  SJackSamplerateCallback(jack_nframes_t nframes, void *arg);
+    int         PJackSamplerateCallback(jack_nframes_t nframes);
+
+    static void SJackInfoShutdownCallback(jack_status_t code, const char *reason, void *arg);
+    void        PJackInfoShutdownCallback(jack_status_t code, const char *reason);
+
     static void SignalHandler(int signum);
 
     bool           m_connected;
@@ -50,6 +56,7 @@ class CAmpSwitch
     int            m_samplerate;
     float          m_switchtime;
     int            m_samplecounter;
+    bool           m_jackshutdown;
 };
 
 #endif //AMPSWITCH_H

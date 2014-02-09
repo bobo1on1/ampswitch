@@ -46,6 +46,7 @@ CAmpSwitch::CAmpSwitch(int argc, char *argv[])
   m_switchtime = 10.0f;
   m_samplecounter = 0;
   m_samplerate = 0;
+  m_jackshutdown = false;
 }
 
 CAmpSwitch::~CAmpSwitch()
@@ -70,6 +71,9 @@ void CAmpSwitch::Process()
 {
   while (!g_stop)
   {
+    if (m_jackshutdown)
+      JackDisconnect();
+
     if (!m_connected)
       Connect();
 
@@ -86,8 +90,6 @@ void CAmpSwitch::Process()
 
     uint8_t byte;
     while (read(m_pipe[0], &byte, 1) == 1);
-
-    sleep(1);
   }
 }
 
@@ -122,12 +124,18 @@ bool CAmpSwitch::JackConnect()
 
   m_samplerate = jack_get_sample_rate(m_client);
 
+  jack_on_info_shutdown(m_client, SJackInfoShutdownCallback, this);
+
   returnv = jack_set_process_callback(m_client, SJackProcessCallback, this);
   if (returnv != 0)
   {
     printf("ERROR: Unable to set process callback\n");
     return false;
   }
+
+  returnv = jack_set_sample_rate_callback(m_client, SJackSamplerateCallback, this);
+  if (returnv != 0)
+    printf("ERROR: Unable to set sample rate callback\n");
 
   m_port = jack_port_register(m_client, "Input", JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
   if (m_port == NULL)
@@ -154,13 +162,12 @@ void CAmpSwitch::JackDisconnect()
   {
     printf("Disconnecting from jack\n");
 
-    jack_port_unregister(m_client, m_port);
-    m_port = NULL;
-
-    jack_deactivate(m_client);
     jack_client_close(m_client);
+    m_port = NULL;
     m_client = NULL;
   }
+  m_jackshutdown = false;
+  m_connected = false;
 }
 
 int CAmpSwitch::SJackProcessCallback(jack_nframes_t nframes, void *arg)
@@ -196,6 +203,32 @@ int CAmpSwitch::PJackProcessCallback(jack_nframes_t nframes)
   }
 
   return 0;
+}
+
+int CAmpSwitch::SJackSamplerateCallback(jack_nframes_t nframes, void *arg)
+{
+  return ((CAmpSwitch*)arg)->PJackSamplerateCallback(nframes);
+}
+
+int CAmpSwitch::PJackSamplerateCallback(jack_nframes_t nframes)
+{
+  m_samplecounter = (double)m_samplecounter / (double)m_samplerate * (double)nframes;
+  m_samplerate = nframes;
+
+  return 0;
+}
+
+void CAmpSwitch::SJackInfoShutdownCallback(jack_status_t code, const char *reason, void *arg)
+{
+  ((CAmpSwitch*)arg)->PJackInfoShutdownCallback(code, reason);
+}
+
+void CAmpSwitch::PJackInfoShutdownCallback(jack_status_t code, const char *reason)
+{
+  uint8_t msgbyte = 0;
+  write(m_pipe[1], &msgbyte, 1);
+
+  m_jackshutdown = true;
 }
 
 void CAmpSwitch::SignalHandler(int signum)
