@@ -156,10 +156,10 @@ void CAmpSwitch::Process()
         printf("switching off, executing \"%s\"\n", m_offcommand);
         system(m_offcommand);
       }
-    }
 
-    uint8_t byte;
-    while (read(m_pipe[0], &byte, 1) == 1);
+      uint8_t byte;
+      while (read(m_pipe[0], &byte, 1) == 1);
+    }
   }
 }
 
