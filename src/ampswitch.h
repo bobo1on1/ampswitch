@@ -32,6 +32,8 @@ class CAmpSwitch
     void Cleanup();
 
   private:
+    void        PrintHelpMessage();
+
     void        Connect();
     bool        JackConnect();
     void        JackDisconnect();
@@ -57,6 +59,9 @@ class CAmpSwitch
     float          m_switchtime;
     int            m_samplecounter;
     bool           m_jackshutdown;
+
+    char*          m_oncommand;
+    char*          m_offcommand;
 };
 
 #endif //AMPSWITCH_H

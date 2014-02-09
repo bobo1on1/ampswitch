@@ -31,6 +31,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/select.h>
+#include <getopt.h>
 
 volatile bool g_stop = false;
 
@@ -47,6 +48,40 @@ CAmpSwitch::CAmpSwitch(int argc, char *argv[])
   m_samplecounter = 0;
   m_samplerate = 0;
   m_jackshutdown = false;
+  m_oncommand = NULL;
+  m_offcommand = NULL;
+
+  struct option longoptions[] =
+  {
+   {"on-command",  required_argument, NULL, 'n'},
+   {"off-command", required_argument, NULL, 'f'},
+   {"help",        no_argument,       NULL, 'h'},
+   {0, 0, 0, 0}
+  };
+
+  const char* shortoptions = "n:f:h";
+  int c;
+  int optionindex = 0;
+  while ((c = getopt_long(argc, argv, shortoptions, longoptions, &optionindex)) != -1)
+  {
+    if (c == 'n')
+    {
+      m_oncommand = optarg;
+    }
+    else if (c == 'f')
+    {
+      m_offcommand = optarg;
+    }
+    else if (c == 'h')
+    {
+      PrintHelpMessage();
+      exit(1);
+    }
+    else if (c == '?')
+    {
+      exit(1);
+    }
+  }
 }
 
 CAmpSwitch::~CAmpSwitch()
@@ -86,7 +121,18 @@ void CAmpSwitch::Process()
     select(m_pipe[0] + 1, &pipeset, NULL, NULL, &tv);
 
     if (FD_ISSET(m_pipe[0], &pipeset))
-      printf("Current state: %s\n", m_switchedon ? "on" : "off");
+    {
+      if (m_switchedon && m_oncommand)
+      {
+        printf("switching on, executing \"%s\"\n", m_oncommand);
+        system(m_oncommand);
+      }
+      else if (!m_switchedon && m_offcommand)
+      {
+        printf("switching off, executing \"%s\"\n", m_offcommand);
+        system(m_offcommand);
+      }
+    }
 
     uint8_t byte;
     while (read(m_pipe[0], &byte, 1) == 1);
@@ -96,6 +142,21 @@ void CAmpSwitch::Process()
 void CAmpSwitch::Cleanup()
 {
   JackDisconnect();
+}
+
+void CAmpSwitch::PrintHelpMessage()
+{
+  printf(
+         "\n"
+         "usage: ampswitch [OPTION]\n"
+         "\n"
+         "  options:\n"
+         "\n"
+         "    -n, --on-command   command to execute when switching on\n"
+         "    -f, --off-command  command to execute when switching off\n"
+         "    -h, --help         print this message\n"
+         "\n"
+         );
 }
 
 void CAmpSwitch::Connect()
