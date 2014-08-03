@@ -129,7 +129,10 @@ bool CAmpSwitch::Setup()
 void CAmpSwitch::Process()
 {
   if (m_offcommand)
+  {
+    printf("switching off, executing \"%s\"\n", m_offcommand);
     system(m_offcommand);
+  }
 
   while (!g_stop)
   {
