@@ -123,6 +123,11 @@ bool CAmpSwitch::Setup()
     return false;
   }
 
+  if (m_oncommand)
+    printf("on command: \"%s\"\n", m_oncommand);
+  if (m_offcommand)
+    printf("off command: \"%s\"\n", m_offcommand);
+
   return true;
 }
 
