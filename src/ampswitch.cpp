@@ -128,6 +128,9 @@ bool CAmpSwitch::Setup()
 
 void CAmpSwitch::Process()
 {
+  if (m_offcommand)
+    system(m_offcommand);
+
   while (!g_stop)
   {
     if (m_jackshutdown)
