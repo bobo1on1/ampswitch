@@ -115,7 +115,7 @@ CAmpSwitch::~CAmpSwitch()
 bool CAmpSwitch::Setup()
 {
   signal(SIGINT, SignalHandler);
-  signal(SIGINT, SignalHandler);
+  signal(SIGTERM, SignalHandler);
 
   if (pipe2(m_pipe, O_NONBLOCK) == -1)
   {
