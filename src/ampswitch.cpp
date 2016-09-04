@@ -114,9 +114,11 @@ CAmpSwitch::~CAmpSwitch()
 
 bool CAmpSwitch::Setup()
 {
+  //install signal handlers for exiting
   signal(SIGINT, SignalHandler);
   signal(SIGTERM, SignalHandler);
 
+  //create a non blocking pipe which the jack thread will use to communicate with the main thread
   if (pipe2(m_pipe, O_NONBLOCK) == -1)
   {
     printf("ERROR: Creating pipe: %s\n", strerror(errno));
@@ -133,6 +135,7 @@ bool CAmpSwitch::Setup()
 
 void CAmpSwitch::Process()
 {
+  //if the off command is passed on the command line, execute that first
   if (m_offcommand)
   {
     printf("switching off, executing \"%s\"\n", m_offcommand);
@@ -141,12 +144,15 @@ void CAmpSwitch::Process()
 
   while (!g_stop)
   {
+    //if the jack daemon has shut down, clean up the jack client
     if (m_jackshutdown)
       JackDisconnect();
 
+    //try to connect to jackd if not connected yet
     if (!m_connected)
       Connect();
 
+    //wait for one second on the readable end of the pipe
     fd_set pipeset;
     FD_ZERO(&pipeset);
     FD_SET(m_pipe[0], &pipeset);
@@ -155,6 +161,8 @@ void CAmpSwitch::Process()
     tv.tv_usec = 0;
     select(m_pipe[0] + 1, &pipeset, NULL, NULL, &tv);
 
+    //if the jack thread has written a byte to the pipe, the switch state has changed
+    //execute the switch on or switch off command if necessary
     if (FD_ISSET(m_pipe[0], &pipeset))
     {
       if (m_switchedon && m_oncommand)
@@ -168,6 +176,7 @@ void CAmpSwitch::Process()
         system(m_offcommand);
       }
 
+      //clear the readable end of the pipe
       uint8_t byte;
       while (read(m_pipe[0], &byte, 1) == 1);
     }
@@ -210,8 +219,8 @@ void CAmpSwitch::Connect()
 
 bool CAmpSwitch::JackConnect()
 {
+  //try to connect to jackd
   m_client = jack_client_open("Ampswitch", JackNoStartServer, NULL);
-
   if (m_client == NULL)
   {
     printf("ERROR: Unable to connect to jack\n");
@@ -220,10 +229,13 @@ bool CAmpSwitch::JackConnect()
 
   int returnv;
 
+  //get the sample rate for timing calculations
   m_samplerate = jack_get_sample_rate(m_client);
 
+  //install a callback which gets called when jackd shuts down
   jack_on_info_shutdown(m_client, SJackInfoShutdownCallback, this);
 
+  //install the process callback, this will be called when a new audio frame is passed
   returnv = jack_set_process_callback(m_client, SJackProcessCallback, this);
   if (returnv != 0)
   {
@@ -231,10 +243,12 @@ bool CAmpSwitch::JackConnect()
     return false;
   }
 
+  //install a callback for when the sample rate changes
   returnv = jack_set_sample_rate_callback(m_client, SJackSamplerateCallback, this);
   if (returnv != 0)
     printf("ERROR: Unable to set sample rate callback\n");
 
+  //register a jack audio port
   m_port = jack_port_register(m_client, "Input", JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
   if (m_port == NULL)
   {
@@ -242,6 +256,7 @@ bool CAmpSwitch::JackConnect()
     return false;
   }
 
+  //activate the jack client
   returnv = jack_activate(m_client);
   if (returnv != 0)
   {
@@ -310,6 +325,7 @@ int CAmpSwitch::SJackSamplerateCallback(jack_nframes_t nframes, void *arg)
 
 int CAmpSwitch::PJackSamplerateCallback(jack_nframes_t nframes)
 {
+  //when the sample rate changes, update the sample counter so that it will represent the same amount of time
   m_samplecounter = (double)m_samplecounter / (double)m_samplerate * (double)nframes;
   m_samplerate = nframes;
 
@@ -323,14 +339,15 @@ void CAmpSwitch::SJackInfoShutdownCallback(jack_status_t code, const char *reaso
 
 void CAmpSwitch::PJackInfoShutdownCallback(jack_status_t code, const char *reason)
 {
+  //signal the main thread that the jack server has shut down
+  m_jackshutdown = true;
   uint8_t msgbyte = 0;
   write(m_pipe[1], &msgbyte, 1);
-
-  m_jackshutdown = true;
 }
 
 void CAmpSwitch::SignalHandler(int signum)
 {
+  //signal the main thread that the process should exit
   if (signum == SIGINT || signum == SIGTERM)
     g_stop = true;
 }
