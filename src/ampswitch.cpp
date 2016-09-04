@@ -331,7 +331,7 @@ void CAmpSwitch::PJackInfoShutdownCallback(jack_status_t code, const char *reaso
 
 void CAmpSwitch::SignalHandler(int signum)
 {
-  if (signum == SIGINT || signum == SIGKILL)
+  if (signum == SIGINT || signum == SIGTERM)
     g_stop = true;
 }
 
