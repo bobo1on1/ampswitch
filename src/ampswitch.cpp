@@ -37,19 +37,19 @@ volatile bool g_stop = false;
 
 CAmpSwitch::CAmpSwitch(int argc, char *argv[])
 {
-  m_connected = false;
-  m_client = NULL;
-  m_port = NULL;
-  m_switchedon = false;
-  m_triggerlevel = 0.5f;
-  m_pipe[0] = -1;
-  m_pipe[1] = -1;
-  m_switchtime = 10.0f;
+  m_connected     = false;
+  m_client        = NULL;
+  m_port          = NULL;
+  m_switchedon    = false;
+  m_triggerlevel  = 0.5f;
+  m_pipe[0]       = -1;
+  m_pipe[1]       = -1;
+  m_switchtime    = 10.0f;
   m_samplecounter = 0;
-  m_samplerate = 0;
-  m_jackshutdown = false;
-  m_oncommand = NULL;
-  m_offcommand = NULL;
+  m_samplerate    = 0;
+  m_jackshutdown  = false;
+  m_oncommand     = NULL;
+  m_offcommand    = NULL;
 
   struct option longoptions[] =
   {
