@@ -32,24 +32,25 @@
 #include <fcntl.h>
 #include <sys/select.h>
 #include <getopt.h>
+#include <algorithm>
 
 volatile bool g_stop = false;
 
 CAmpSwitch::CAmpSwitch(int argc, char *argv[])
 {
+  m_triggerlevel  = 0.1f;
+  m_switchtime    = 10.0f;
+  m_oncommand     = NULL;
+  m_offcommand    = NULL;
+  m_pipe[0]       = -1;
+  m_pipe[1]       = -1;
   m_connected     = false;
   m_client        = NULL;
   m_port          = NULL;
-  m_switchedon    = false;
-  m_triggerlevel  = 0.5f;
-  m_pipe[0]       = -1;
-  m_pipe[1]       = -1;
-  m_switchtime    = 10.0f;
-  m_samplecounter = 0;
   m_samplerate    = 0;
   m_jackshutdown  = false;
-  m_oncommand     = NULL;
-  m_offcommand    = NULL;
+  m_switchedon    = false;
+  m_samplecounter = 0;
 
   struct option longoptions[] =
   {
@@ -142,6 +143,9 @@ void CAmpSwitch::Process()
     system(m_offcommand);
   }
 
+  //local switch state
+  bool switchedon = false;
+
   while (!g_stop)
   {
     //if the jack daemon has shut down, clean up the jack client
@@ -161,24 +165,25 @@ void CAmpSwitch::Process()
     tv.tv_usec = 0;
     select(m_pipe[0] + 1, &pipeset, NULL, NULL, &tv);
 
+    //clear the readable end of the pipe
+    uint8_t byte;
+    read(m_pipe[0], &byte, 1);
+
     //if the jack thread has written a byte to the pipe, the switch state has changed
     //execute the switch on or switch off command if necessary
-    if (FD_ISSET(m_pipe[0], &pipeset))
+    if (switchedon != m_switchedon)
     {
-      if (m_switchedon && m_oncommand)
+      switchedon = m_switchedon;
+      if (switchedon && m_oncommand)
       {
         printf("switching on, executing \"%s\"\n", m_oncommand);
         system(m_oncommand);
       }
-      else if (!m_switchedon && m_offcommand)
+      else if (!switchedon && m_offcommand)
       {
         printf("switching off, executing \"%s\"\n", m_offcommand);
         system(m_offcommand);
       }
-
-      //clear the readable end of the pipe
-      uint8_t byte;
-      while (read(m_pipe[0], &byte, 1) == 1);
     }
   }
 }
@@ -292,26 +297,33 @@ int CAmpSwitch::PJackProcessCallback(jack_nframes_t nframes)
 {
   float* jackptr = (float*)jack_port_get_buffer(m_port, nframes);
 
+  //iterate over all samples
   float* in = jackptr;
   float* inend = in + nframes;
   while (in != inend)
   {
-    if (m_samplecounter == 0)
+    //if the absolute sample value is higher than the trigger level, set the switch state to on and reset the sample counter
+    bool trigger = fabsf(*(in++)) > m_triggerlevel;
+    if (trigger)
     {
-      bool trigger = fabsf(*(in++)) > m_triggerlevel;
-      bool change = (m_switchedon && !trigger) || (!m_switchedon && trigger);
-      if (change)
+      m_samplecounter = std::max((int)lround(m_switchtime * m_samplerate), 1);
+      if (!m_switchedon)
       {
-        m_switchedon = !m_switchedon;
-        m_samplecounter = m_switchtime * m_samplerate;
-
+        m_switchedon = true;
         uint8_t msgbyte = 0;
         write(m_pipe[1], &msgbyte, 1);
       }
     }
-    else
+    else if (m_samplecounter > 0)
     {
+      //if the sample counter expires, set the switch state to off
       m_samplecounter--;
+      if (m_samplecounter == 0)
+      {
+        m_switchedon = false;
+        uint8_t msgbyte = 0;
+        write(m_pipe[1], &msgbyte, 1);
+      }
     }
   }
 
@@ -326,7 +338,7 @@ int CAmpSwitch::SJackSamplerateCallback(jack_nframes_t nframes, void *arg)
 int CAmpSwitch::PJackSamplerateCallback(jack_nframes_t nframes)
 {
   //when the sample rate changes, update the sample counter so that it will represent the same amount of time
-  m_samplecounter = (double)m_samplecounter / (double)m_samplerate * (double)nframes;
+  m_samplecounter = lround((double)m_samplecounter / (double)m_samplerate * (double)nframes);
   m_samplerate = nframes;
 
   return 0;

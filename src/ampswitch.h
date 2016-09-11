@@ -49,19 +49,21 @@ class CAmpSwitch
 
     static void SignalHandler(int signum);
 
+    float          m_triggerlevel;
+    float          m_switchtime;
+    char*          m_oncommand;
+    char*          m_offcommand;
+
+    int            m_pipe[2];
+
     bool           m_connected;
     jack_client_t* m_client;
     jack_port_t*   m_port;
-    int            m_pipe[2];
-    bool           m_switchedon;
-    float          m_triggerlevel;
     int            m_samplerate;
-    float          m_switchtime;
-    int            m_samplecounter;
     bool           m_jackshutdown;
 
-    char*          m_oncommand;
-    char*          m_offcommand;
+    bool           m_switchedon;
+    int            m_samplecounter;
 };
 
 #endif //AMPSWITCH_H
