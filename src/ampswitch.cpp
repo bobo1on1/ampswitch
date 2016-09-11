@@ -186,6 +186,13 @@ void CAmpSwitch::Process()
       }
     }
   }
+
+  //if the off command is passed on the command line, execute that before exiting
+  if (m_offcommand)
+  {
+    printf("switching off, executing \"%s\"\n", m_offcommand);
+    system(m_offcommand);
+  }
 }
 
 void CAmpSwitch::Cleanup()
