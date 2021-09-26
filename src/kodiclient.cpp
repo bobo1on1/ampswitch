@@ -29,9 +29,6 @@
 
 using namespace boost::asio;
 using ip::tcp;
-using std::string;
-using std::cout;
-using std::endl;
 using namespace nlohmann;
 
 void CKodiClient::Start(CAmpSwitch* ampswitch)
