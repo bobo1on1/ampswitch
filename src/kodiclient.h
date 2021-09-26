@@ -20,6 +20,7 @@
 #define KODICLIENT_H
 
 #include <thread>
+#include <string>
 
 class CAmpSwitch;
 
@@ -31,6 +32,7 @@ class CKodiClient
   private:
     static void SProcess(CKodiClient* kodiclient);
     void        Process();
+    void        Parse(const std::string& jsonstr);
 
     std::thread m_thread;
     CAmpSwitch* m_ampswitch;
