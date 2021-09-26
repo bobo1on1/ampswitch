@@ -20,6 +20,7 @@
 #define AMPSWITCH_H
 
 #include <jack/jack.h>
+#include "kodiclient.h"
 
 class CAmpSwitch
 {
@@ -64,6 +65,9 @@ class CAmpSwitch
 
     bool           m_switchedon;
     int            m_samplecounter;
+
+    bool           m_usekodi;
+    CKodiClient    m_kodiclient;
 };
 
 #endif //AMPSWITCH_H

@@ -16,15 +16,18 @@ def configure(conf):
   conf.load('compiler_cxx')
 
   conf.check(header_name='jack/jack.h')
+  conf.check(header_name='boost/asio.hpp')
 
-  conf.check(lib='jack', uselib_store='jack', mandatory=False)
+  conf.check(lib='jack', uselib_store='jack', mandatory=True)
+  conf.check(lib='pthread', uselib_store='pthread', mandatory=False)
 
   conf.write_config_header('config.h')
 
 def build(bld):
   bld.program(source='src/main.cpp\
-                      src/ampswitch.cpp',
-              use=['jack'],
+                      src/ampswitch.cpp\
+                      src/kodiclient.cpp',
+              use=['jack', 'pthread'],
               includes='./src',
               cxxflags='-Wall -g',
               target='ampswitch')

@@ -51,6 +51,7 @@ CAmpSwitch::CAmpSwitch(int argc, char *argv[])
   m_jackshutdown  = false;
   m_switchedon    = false;
   m_samplecounter = 0;
+  m_usekodi       = false;
 
   struct option longoptions[] =
   {
@@ -58,11 +59,12 @@ CAmpSwitch::CAmpSwitch(int argc, char *argv[])
    {"off-command",   required_argument, NULL, 'f'},
    {"switch-time",   required_argument, NULL, 's'},
    {"trigger-level", required_argument, NULL, 't'},
+   {"kodi",          no_argument,       NULL, 'k'},
    {"help",          no_argument,       NULL, 'h'},
    {0, 0, 0, 0}
   };
 
-  const char* shortoptions = "n:f:s:t:h";
+  const char* shortoptions = "n:f:s:t:kh";
   int c;
   int optionindex = 0;
   while ((c = getopt_long(argc, argv, shortoptions, longoptions, &optionindex)) != -1)
@@ -102,6 +104,10 @@ CAmpSwitch::CAmpSwitch(int argc, char *argv[])
 
       m_triggerlevel = triggerlevel;
     }
+    else if (c == 'k')
+    {
+      m_usekodi = true;
+    }
     else if (c == '?')
     {
       exit(1);
@@ -130,6 +136,9 @@ bool CAmpSwitch::Setup()
     printf("on command: \"%s\"\n", m_oncommand);
   if (m_offcommand)
     printf("off command: \"%s\"\n", m_offcommand);
+
+  if (m_usekodi)
+    m_kodiclient.Start(); //start a thread that connects to Kodi's JSONRPC
 
   return true;
 }
@@ -212,6 +221,7 @@ void CAmpSwitch::PrintHelpMessage()
          "    -f, --off-command   command to execute when switching off\n"
          "    -s, --switch-time   minimum number of seconds between switches\n"
          "    -t, --trigger-level absolute value of trigger level\n"
+         "    -k, --kodi          use Kodi's JSONRPC to switch on when playback starts\n"
          "    -h, --help          print this message\n"
          "\n"
          );
