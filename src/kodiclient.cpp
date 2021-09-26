@@ -17,7 +17,18 @@
  */
 
 #include "kodiclient.h"
+
 #include <cstdio>
+#include <unistd.h>
+
+#include <iostream>
+#include <boost/asio.hpp>
+
+using namespace boost::asio;
+using ip::tcp;
+using std::string;
+using std::cout;
+using std::endl;
 
 void CKodiClient::Start()
 {
@@ -32,4 +43,35 @@ void CKodiClient::SProcess(CKodiClient* kodiclient)
 void CKodiClient::Process()
 {
   printf("Kodi client started\n");
+
+  for(;;)
+  {
+    try
+    {
+      //TODO: make "localhost" work instead of "127.0.0.1"
+      boost::asio::io_service  io_service;
+      tcp::socket              socket(io_service);
+      boost::asio::ip::address address = boost::asio::ip::make_address("127.0.0.1");
+
+      //Connect to Kodi's JSONRPC, this will thrown an exception on failure.
+      socket.connect(tcp::endpoint(address, 9090));
+
+      //Keep reading data from Kodi, when the tcp socket is closed an exception is thrown.
+      for(;;)
+      {
+        boost::asio::streambuf receive_buffer;
+        size_t readbytes = boost::asio::read(socket, receive_buffer, boost::asio::transfer_at_least(1));
+        const char* data = boost::asio::buffer_cast<const char*>(receive_buffer.data());
+
+        printf("Received %i bytes: %s\n", (int)readbytes, data);
+        printf("Data length: %i\n", (int)strlen(data));
+      }
+    }
+    catch(boost::system::system_error& error)
+    {
+      printf("ERROR: unable to connect to Kodi JSONRPC: %s\n", error.what());
+      printf("Retrying in 10 seconds\n");
+      sleep(10);
+    }
+  }
 }
