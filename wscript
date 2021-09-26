@@ -17,6 +17,7 @@ def configure(conf):
 
   conf.check(header_name='jack/jack.h')
   conf.check(header_name='boost/asio.hpp')
+  conf.check(header_name='nlohmann/json.hpp')
 
   conf.check(lib='jack', uselib_store='jack', mandatory=True)
   conf.check(lib='pthread', uselib_store='pthread', mandatory=False)

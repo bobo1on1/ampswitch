@@ -28,27 +28,29 @@ class CAmpSwitch
     CAmpSwitch(int argc, char *argv[]);
     ~CAmpSwitch();
 
-    bool Setup();
-    void Process();
-    void Cleanup();
+    bool           Setup();
+    void           Process();
+    void           Cleanup();
+
+    void           SignalPlayStart();
 
   private:
-    void        PrintHelpMessage();
+    void           PrintHelpMessage();
 
-    void        Connect();
-    bool        JackConnect();
-    void        JackDisconnect();
+    void           Connect();
+    bool           JackConnect();
+    void           JackDisconnect();
 
-    static int  SJackProcessCallback(jack_nframes_t nframes, void *arg);
-    int         PJackProcessCallback(jack_nframes_t nframes);
+    static int     SJackProcessCallback(jack_nframes_t nframes, void *arg);
+    int            PJackProcessCallback(jack_nframes_t nframes);
 
-    static int  SJackSamplerateCallback(jack_nframes_t nframes, void *arg);
-    int         PJackSamplerateCallback(jack_nframes_t nframes);
+    static int     SJackSamplerateCallback(jack_nframes_t nframes, void *arg);
+    int            PJackSamplerateCallback(jack_nframes_t nframes);
 
-    static void SJackInfoShutdownCallback(jack_status_t code, const char *reason, void *arg);
-    void        PJackInfoShutdownCallback(jack_status_t code, const char *reason);
+    static void    SJackInfoShutdownCallback(jack_status_t code, const char *reason, void *arg);
+    void           PJackInfoShutdownCallback(jack_status_t code, const char *reason);
 
-    static void SignalHandler(int signum);
+    static void    SignalHandler(int signum);
 
     float          m_triggerlevel;
     float          m_switchtime;
@@ -68,6 +70,7 @@ class CAmpSwitch
 
     bool           m_usekodi;
     CKodiClient    m_kodiclient;
+    bool           m_playstart;
 };
 
 #endif //AMPSWITCH_H

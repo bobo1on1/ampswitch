@@ -52,6 +52,7 @@ CAmpSwitch::CAmpSwitch(int argc, char *argv[])
   m_switchedon    = false;
   m_samplecounter = 0;
   m_usekodi       = false;
+  m_playstart     = false;
 
   struct option longoptions[] =
   {
@@ -138,7 +139,7 @@ bool CAmpSwitch::Setup()
     printf("off command: \"%s\"\n", m_offcommand);
 
   if (m_usekodi)
-    m_kodiclient.Start(); //start a thread that connects to Kodi's JSONRPC
+    m_kodiclient.Start(this); //start a thread that connects to Kodi's JSONRPC
 
   return true;
 }
@@ -321,6 +322,14 @@ int CAmpSwitch::PJackProcessCallback(jack_nframes_t nframes)
   {
     //if the absolute sample value is higher than the trigger level, set the switch state to on and reset the sample counter
     bool trigger = fabsf(*(in++)) > m_triggerlevel;
+
+    //Consider a playback start as a trigger.
+    if (m_playstart)
+    {
+      trigger = true;
+      m_playstart = false;
+    }
+
     if (trigger)
     {
       m_samplecounter = std::max((int)lround(m_switchtime * m_samplerate), 1);
@@ -381,3 +390,8 @@ void CAmpSwitch::SignalHandler(int signum)
     g_stop = true;
 }
 
+void CAmpSwitch::SignalPlayStart()
+{
+  //Signal the jack client thread that playback has started.
+  m_playstart = true;
+}

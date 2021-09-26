@@ -16,16 +16,24 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef KODICLIENT_H
+#define KODICLIENT_H
+
 #include <thread>
+
+class CAmpSwitch;
 
 class CKodiClient
 {
   public:
-    void        Start();
+    void        Start(CAmpSwitch* ampswitch);
 
   private:
     static void SProcess(CKodiClient* kodiclient);
     void        Process();
 
     std::thread m_thread;
+    CAmpSwitch* m_ampswitch;
 };
+
+#endif //KODICLIENT_H
