@@ -148,12 +148,18 @@ void CKodiClient::Parse(const std::string& jsonstr)
 {
   json jsondata = json::parse(jsonstr);
 
-  //If Kodi signals a Player.OnPlay notification, the amplifier should be turned on.
   if (jsondata.contains("method"))
   {
-    if (jsondata["method"] == "Player.OnPlay")
+    std::string method = jsondata["method"];
+
+    if (method == "Player.OnPlay")
     {
       printf("Player started\n");
+      m_ampswitch->SignalPlayStart();
+    }
+    else if (method == "Player.OnResume")
+    {
+      printf("Player unpaused\n");
       m_ampswitch->SignalPlayStart();
     }
   }
