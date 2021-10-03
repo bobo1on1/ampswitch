@@ -61,66 +61,17 @@ void CKodiClient::Process()
 
       printf("Connected to Kodi\n");
 
-      //Keep reading data from Kodi, when the tcp socket is closed an exception is thrown.
-      uint32_t    bracketlevel = 0;
-      bool        instring = false;
-      bool        escaped  = false;
-      std::string jsonstr;
+      //Read data from the TCP socket, and split into separate JSON objects.
+      ResetSplit();
       for(;;)
       {
         boost::asio::streambuf receive_buffer;
-        size_t bytesread = boost::asio::read(socket, receive_buffer, boost::asio::transfer_at_least(1));
+        size_t bytesread = boost::asio::read(socket, receive_buffer,
+                                             boost::asio::transfer_at_least(1));
 
         const char* data = boost::asio::buffer_cast<const char*>(receive_buffer.data());
 
-        //Parse the JSON data into separate JSON objects by finding the text from
-        //the starting { to ending }, while ignoring curly brackets in strings.
-        for (uint32_t i = 0; i < (uint32_t)bytesread; i++)
-        {
-          jsonstr.push_back(data[i]);
-
-          if (!instring)
-          {
-            if (data[i] == '"')
-            {
-              instring = true;
-            }
-            else if (data[i] == '{')
-            {
-              bracketlevel++;
-            }
-            else if (data[i] == '}')
-            {
-              if (bracketlevel > 0)
-              {
-                bracketlevel--;
-                if (bracketlevel == 0)
-                {
-                  Parse(jsonstr);
-                  jsonstr.clear();
-                }
-              }
-              else
-              {
-                jsonstr.clear(); //Shouldn't happen.
-              }
-            }
-          }
-          else
-          {
-            if (!escaped)
-            {
-              if (data[i] == '\\')
-                escaped = true;
-              else if (data[i] == '"')
-                instring = false;
-            }
-            else
-            {
-              escaped = false;
-            }
-          }
-        }
+        Split(data, bytesread);
       }
     }
     catch(boost::system::system_error& error)
@@ -128,6 +79,67 @@ void CKodiClient::Process()
       printf("ERROR: unable to connect to Kodi JSONRPC: %s\n", error.what());
       printf("Retrying in 10 seconds\n");
       sleep(10);
+    }
+  }
+}
+
+void CKodiClient::ResetSplit()
+{
+  m_bracketlevel = 0;
+  m_instring     = false;
+  m_escaped      = false;
+  m_parsebuf.clear();
+}
+
+/*! Splits JSON objects from Kodi's JSON RPC and passes them to Parse().*/
+void CKodiClient::Split(const char* data, uint32_t len)
+{
+  //Parse the JSON data into separate JSON objects by finding the text from
+  //the starting { to ending }, while ignoring curly brackets in strings.
+  for (uint32_t i = 0; i < len; i++)
+  {
+    m_parsebuf.push_back(data[i]);
+
+    if (!m_instring)
+    {
+      if (data[i] == '"')
+      {
+        m_instring = true;
+      }
+      else if (data[i] == '{')
+      {
+        m_bracketlevel++;
+      }
+      else if (data[i] == '}')
+      {
+        if (m_bracketlevel > 0)
+        {
+          m_bracketlevel--;
+          if (m_bracketlevel == 0)
+          { //Parse the full received JSON object.
+            Parse(m_parsebuf);
+            m_parsebuf.clear();
+          }
+        }
+        else
+        {
+          m_parsebuf.clear(); //Shouldn't happen.
+        }
+      }
+    }
+    else
+    {
+      if (!m_escaped)
+      {
+        if (data[i] == '\\')
+          m_escaped = true;
+        else if (data[i] == '"')
+          m_instring = false;
+      }
+      else
+      {
+        m_escaped = false;
+      }
     }
   }
 }

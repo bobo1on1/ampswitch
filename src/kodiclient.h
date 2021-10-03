@@ -32,10 +32,17 @@ class CKodiClient
   private:
     static void SProcess(CKodiClient* kodiclient);
     void        Process();
+    void        ResetSplit();
+    void        Split(const char* data, uint32_t len);
     void        Parse(const std::string& jsonstr);
 
     std::thread m_thread;
     CAmpSwitch* m_ampswitch;
+
+    uint32_t    m_bracketlevel;
+    bool        m_instring;
+    bool        m_escaped;
+    std::string m_parsebuf;
 };
 
 #endif //KODICLIENT_H
