@@ -76,6 +76,7 @@ void CKodiClient::Process()
     }
     catch(boost::system::system_error& error)
     {
+      m_ampswitch->SetPlayingState(false);
       printf("ERROR: unable to connect to Kodi JSONRPC: %s\n", error.what());
       printf("Retrying in 10 seconds\n");
       sleep(10);
@@ -155,12 +156,12 @@ void CKodiClient::Parse(const std::string& jsonstr)
     if (method == "Player.OnPlay")
     {
       printf("Player started\n");
-      m_ampswitch->SignalPlayStart();
+      m_ampswitch->SetPlayingState(true);
     }
-    else if (method == "Player.OnResume")
+    else if (method == "Player.OnStop")
     {
-      printf("Player unpaused\n");
-      m_ampswitch->SignalPlayStart();
+      printf("Player stopped\n");
+      m_ampswitch->SetPlayingState(false);
     }
   }
 }

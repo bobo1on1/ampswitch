@@ -52,7 +52,7 @@ CAmpSwitch::CAmpSwitch(int argc, char *argv[])
   m_switchedon    = false;
   m_samplecounter = 0;
   m_usekodi       = false;
-  m_playstart     = false;
+  m_playing       = false;
 
   struct option longoptions[] =
   {
@@ -323,12 +323,9 @@ int CAmpSwitch::PJackProcessCallback(jack_nframes_t nframes)
     //if the absolute sample value is higher than the trigger level, set the switch state to on and reset the sample counter
     bool trigger = fabsf(*(in++)) > m_triggerlevel;
 
-    //Consider a playback start as a trigger.
-    if (m_playstart)
-    {
+    //Consider kodi playing as a trigger
+    if (m_playing)
       trigger = true;
-      m_playstart = false;
-    }
 
     if (trigger)
     {
@@ -390,8 +387,8 @@ void CAmpSwitch::SignalHandler(int signum)
     g_stop = true;
 }
 
-void CAmpSwitch::SignalPlayStart()
+void CAmpSwitch::SetPlayingState(bool playing)
 {
-  //Signal the jack client thread that playback has started.
-  m_playstart = true;
+  //Inform the switch thread about the play state of kodi
+  m_playing = playing;
 }

@@ -32,7 +32,7 @@ class CAmpSwitch
     void           Process();
     void           Cleanup();
 
-    void           SignalPlayStart();
+    void           SetPlayingState(bool playing);
 
   private:
     void           PrintHelpMessage();
@@ -70,7 +70,7 @@ class CAmpSwitch
 
     bool           m_usekodi;
     CKodiClient    m_kodiclient;
-    bool           m_playstart;
+    bool           m_playing;
 };
 
 #endif //AMPSWITCH_H
