@@ -60,6 +60,7 @@ class CAmpSwitch
     int            m_pipe[2];
 
     bool           m_connected;
+    const char*    m_jackname;
     jack_client_t* m_client;
     jack_port_t*   m_port;
     int            m_samplerate;

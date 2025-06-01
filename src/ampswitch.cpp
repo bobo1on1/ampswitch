@@ -45,6 +45,7 @@ CAmpSwitch::CAmpSwitch(int argc, char *argv[])
   m_pipe[0]       = -1;
   m_pipe[1]       = -1;
   m_connected     = false;
+  m_jackname      = "Ampswitch";
   m_client        = NULL;
   m_port          = NULL;
   m_samplerate    = 0;
@@ -56,6 +57,7 @@ CAmpSwitch::CAmpSwitch(int argc, char *argv[])
 
   struct option longoptions[] =
   {
+   {"jack-name",     required_argument, NULL, 'j'},
    {"on-command",    required_argument, NULL, 'n'},
    {"off-command",   required_argument, NULL, 'f'},
    {"switch-time",   required_argument, NULL, 's'},
@@ -65,12 +67,16 @@ CAmpSwitch::CAmpSwitch(int argc, char *argv[])
    {0, 0, 0, 0}
   };
 
-  const char* shortoptions = "n:f:s:t:kh";
+  const char* shortoptions = "j:n:f:s:t:kh";
   int c;
   int optionindex = 0;
   while ((c = getopt_long(argc, argv, shortoptions, longoptions, &optionindex)) != -1)
   {
-    if (c == 'n')
+    if (c == 'j')
+    {
+      m_jackname = optarg;
+    }
+    else if (c == 'n')
     {
       m_oncommand = optarg;
     }
@@ -218,6 +224,7 @@ void CAmpSwitch::PrintHelpMessage()
          "\n"
          "  options:\n"
          "\n"
+         "    -j, --jack-name     name of the jack client\n"
          "    -n, --on-command    command to execute when switching on\n"
          "    -f, --off-command   command to execute when switching off\n"
          "    -s, --switch-time   minimum number of seconds between switches\n"
@@ -243,7 +250,7 @@ void CAmpSwitch::Connect()
 bool CAmpSwitch::JackConnect()
 {
   //try to connect to jackd
-  m_client = jack_client_open("Ampswitch", JackNoStartServer, NULL);
+  m_client = jack_client_open(m_jackname, JackNoStartServer, NULL);
   if (m_client == NULL)
   {
     printf("ERROR: Unable to connect to jack\n");
@@ -287,7 +294,7 @@ bool CAmpSwitch::JackConnect()
     return false;
   }
 
-  printf("Connected to jack\n");
+  printf("Connected to jack with name %s\n", m_jackname);
 
   return true;
 }
